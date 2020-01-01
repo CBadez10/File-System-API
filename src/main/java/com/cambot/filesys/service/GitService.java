@@ -1,8 +1,10 @@
 package com.cambot.filesys.service;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -17,21 +19,25 @@ public class GitService {
 	@Autowired
 	private GitRepository gitRepository;
 
-	public ResponseEntity<GitResponse> getFiles() {
+	public ResponseEntity<List<FileSystem>> getFiles() {
 
 		GitResponse gitResponse = gitRepository.getFiles().getBody();
-		getPath(gitResponse);
-		return gitRepository.getFiles();
+		ResponseEntity<List<FileSystem>> fileSystem = new ResponseEntity<List<FileSystem>>(getPath(gitResponse),
+				HttpStatus.OK);
+		return fileSystem;
+		// return gitRepository.getFiles();
 	}
 
-	public void getPath(GitResponse gitResponse) {
+	public List<FileSystem> getPath(GitResponse gitResponse) {
 		List<Tree> trees = gitResponse.getTree();
+		List<FileSystem> fileSystemList = new LinkedList<>();
 		for (Tree tree : trees) {
 			// Is file
 			if (tree.getType().equalsIgnoreCase("blob")) {
-				String path = tree.getPath();
 				FileSystem fileSystem = new FileSystem();
+				String path = tree.getPath();
 				// TODO Lombok, name, size, parentId, children
+				fileSystem.setHash(tree.getSha());
 				fileSystem.setType("__file__");
 				fileSystem.setName(getFileName(path));
 				fileSystem.setCreatorName("Cam");
@@ -41,12 +47,12 @@ public class GitService {
 				fileSystem.setParentPath(getParentPath(path));
 				fileSystem.setPath(path);
 				fileSystem.setChildren(null);
-				System.out.println(fileSystem.toString());
+				fileSystemList.add(fileSystem);
 			} else { // Is directory
 
 			}
-
 		}
+		return fileSystemList;
 	}
 
 	public String getParentPath(String path) {

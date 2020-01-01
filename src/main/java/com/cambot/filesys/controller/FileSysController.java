@@ -1,5 +1,7 @@
 package com.cambot.filesys.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.cambot.filesys.models.GitResponse;
+import com.cambot.filesys.models.FileSystem;
 import com.cambot.filesys.service.GitService;
 import com.cambot.filesys.service.JenkinsService;
 
@@ -30,7 +32,7 @@ public class FileSysController {
 	}
 
 	@GetMapping(path = "/files")
-	public ResponseEntity<GitResponse> getFiles() {
+	public ResponseEntity<List<FileSystem>> getFiles() {
 		return gitService.getFiles();
 	}
 
