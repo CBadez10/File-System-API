@@ -19,6 +19,8 @@ public class GitService {
 	@Autowired
 	private GitRepository gitRepository;
 
+	private List<FileSystem> fileSystemList = new LinkedList<>();
+
 	public ResponseEntity<List<FileSystem>> getFiles() {
 
 		GitResponse gitResponse = gitRepository.getFiles().getBody();
@@ -30,34 +32,51 @@ public class GitService {
 
 	public List<FileSystem> getPath(GitResponse gitResponse) {
 		List<Tree> trees = gitResponse.getTree();
-		List<FileSystem> fileSystemList = new LinkedList<>();
 		for (Tree tree : trees) {
-			// Is file
+			boolean isFile = false;
 			if (tree.getType().equalsIgnoreCase("blob")) {
-				FileSystem fileSystem = new FileSystem();
-				String path = tree.getPath();
-				// TODO Lombok, name, size, parentId, children
-				fileSystem.setHash(tree.getSha());
-				fileSystem.setType("__file__");
-				fileSystem.setName(getFileName(path));
-				fileSystem.setCreatorName("Cam");
-				fileSystem.setSize(100);
-				fileSystem.setDate("2019-04-20");
-				fileSystem.setParentID("1");
-				fileSystem.setParentPath(getParentPath(path));
-				fileSystem.setPath(path);
-				fileSystem.setChildren(null);
-				fileSystemList.add(fileSystem);
-			} else { // Is directory
-
+				isFile = true;
 			}
+			FileSystem fileSystem = new FileSystem();
+			String path = tree.getPath();
+			// TODO Builder, name, size, parentId, children
+			fileSystem.setHash(tree.getSha());
+			fileSystem.setName(getFileName(path));
+			fileSystem.setCreatorName("Cam");
+			fileSystem.setSize(tree.getSize());
+			fileSystem.setDate("2019-04-20");
+			fileSystem.setParentID("1");
+			fileSystem.setParentPath(getParentPath(path));
+			fileSystem.setPath(path);
+			fileSystem.setChildren(null);
+			if (isFile) {
+				fileSystem.setType("__file__");
+			} else {
+				fileSystem.setType("__folder__");
+			}
+			fileSystemList.add(fileSystem);
 		}
+		findChildren(fileSystemList);
 		return fileSystemList;
+	}
+
+	public void findChildren(List<FileSystem> fileSystemList) {
+		String comp = null;
+		for (FileSystem entity : fileSystemList) {
+			List<String> children = new LinkedList<>();
+			comp = entity.getPath();
+			for (int i = 1; i < fileSystemList.size(); i++) {
+				FileSystem compEntity = fileSystemList.get(i);
+				if (comp.equalsIgnoreCase((String) compEntity.getParentPath())) {
+					children.add(compEntity.getHash());
+				}
+			}
+			entity.setChildren(children);
+		}
 	}
 
 	public String getParentPath(String path) {
 		int index;
-
 		index = path.lastIndexOf("/");
 		if (index == -1) {
 			return "/";
